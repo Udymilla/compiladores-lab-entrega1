@@ -1,0 +1,5 @@
+*.mplb
+__pycache__/
+*.pyc
+evidencias/
+.DS_Store
