@@ -171,3 +171,50 @@ Espaços, tabulações e quebras de linha apenas separam tokens. Comentários de
 linha seguem a forma `//[^\n]*`; comentários de bloco começam em `/*` e
 terminam no primeiro `*/`, podendo atravessar linhas. Comentários não geram
 tokens.
+
+---
+
+## Gramática implementada
+
+A gramática abaixo está em EBNF. Terminais escritos em maiúsculas representam
+os tipos de token produzidos pelo analisador léxico.
+
+```ebnf
+programa       = { funcao }, FIM_ARQUIVO ;
+funcao         = "funcao", tipo_retorno, ID, "(", [ parametros ], ")", bloco ;
+tipo_retorno   = tipo | "vazio" ;
+tipo           = "inteiro" | "real" | "logico" | "texto" ;
+parametros     = parametro, { ",", parametro } ;
+parametro      = tipo, ID ;
+
+bloco          = "{", { comando }, "}" ;
+comando        = declaracao | atribuicao | condicional | repeticao
+               | escrita | retorno | chamada, ";" | bloco ;
+declaracao     = tipo, ID, [ "=", expressao ], ";" ;
+atribuicao     = ID, "=", expressao, ";" ;
+condicional    = "se", "(", expressao, ")", bloco,
+                 [ "senao", bloco ] ;
+repeticao      = "enquanto", "(", expressao, ")", bloco ;
+escrita        = "escreva", "(", expressao, ")", ";" ;
+retorno        = "retorne", [ expressao ], ";" ;
+chamada        = ID, "(", [ argumentos ], ")" ;
+argumentos     = expressao, { ",", expressao } ;
+
+expressao      = expr_ou ;
+expr_ou        = expr_e, { "ou", expr_e } ;
+expr_e         = igualdade, { "e", igualdade } ;
+igualdade      = comparacao, { ( "==" | "!=" ), comparacao } ;
+comparacao     = adicao, { ( "<" | "<=" | ">" | ">=" ), adicao } ;
+adicao         = multiplicacao, { ( "+" | "-" ), multiplicacao } ;
+multiplicacao  = unaria, { ( "*" | "/" | "%" ), unaria } ;
+unaria         = ( "nao" | "-" ), unaria | primaria ;
+primaria       = INTEIRO | REAL | LOGICO | TEXTO
+               | ID, [ "(", [ argumentos ], ")" ]
+               | "(", expressao, ")" ;
+```
+
+A precedência está codificada pela sequência de funções `expr_ou`, `expr_e`,
+`igualdade`, `comparacao`, `adicao`, `multiplicacao`, `unaria` e `primaria`:
+cada nível chama o nível seguinte, que é mais forte. As repetições nos níveis
+binários constroem a árvore da esquerda para a direita; a recursão de `unaria`
+torna `nao` e o menos unário associativos à direita.
