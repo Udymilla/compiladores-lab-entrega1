@@ -218,3 +218,16 @@ A precedência está codificada pela sequência de funções `expr_ou`, `expr_e`
 cada nível chama o nível seguinte, que é mais forte. As repetições nos níveis
 binários constroem a árvore da esquerda para a direita; a recursão de `unaria`
 torna `nao` e o menos unário associativos à direita.
+
+---
+
+## Representação dos escopos
+
+Os escopos são representados por uma árvore de objetos `Escopo`, cada um com
+um dicionário de símbolos e uma ligação para o escopo pai. O escopo global
+guarda as funções; cada função abre um escopo para parâmetros e outro para seu
+bloco, e cada bloco aninhado abre um novo nó. A resolução de um nome começa no
+escopo atual e segue os pais, permitindo sombreamento sem perder a declaração
+externa. Também mantemos os escopos numa lista em ordem de abertura, escolha que
+facilita o despejo exigido e permitirá associar símbolos a posições de memória
+na geração de código.
