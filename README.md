@@ -231,3 +231,41 @@ escopo atual e segue os pais, permitindo sombreamento sem perder a declaração
 externa. Também mantemos os escopos numa lista em ordem de abertura, escolha que
 facilita o despejo exigido e permitirá associar símbolos a posições de memória
 na geração de código.
+
+---
+
+## Código intermediário e máquina virtual
+
+O código intermediário usa temporários (`t0`, `t1`, ...) e decompõe cada
+expressão para manter no máximo um operador por instrução. O arquivo `.mplb` é
+texto UTF-8 legível: começa com `MPLB 1`, descreve cada função entre `FUNCTION`
+e `END` e grava cada instrução como um objeto JSON em uma linha. Cada chamada
+cria um registro de ativação próprio, contendo instrução atual, parâmetros,
+variáveis locais, temporários e pilha de operandos; por isso chamadas recursivas
+não sobrescrevem os valores umas das outras.
+
+### Conjunto de instruções da VM
+
+| Instrução | Efeito sobre a pilha de operandos |
+|---|---|
+| `PUSH_CONST` | Empilha uma constante e conserva seu tipo MPL. |
+| `PUSH_DEFAULT` | Empilha o valor padrão do tipo: `0`, `0.0`, `falso` ou `""`. |
+| `LOAD_LOCAL` | Empilha o valor de uma variável local ou parâmetro. |
+| `STORE_LOCAL` | Desempilha um valor e o grava numa variável local. |
+| `LOAD_TEMP` | Empilha o valor de um temporário do registro atual. |
+| `STORE_TEMP` | Desempilha um valor e o grava num temporário. |
+| `TO_REAL` | Desempilha um inteiro, converte-o para real e empilha o resultado. |
+| `UNARY` | Desempilha um operando, aplica `-` ou `nao` e empilha o resultado. |
+| `BINARY` | Desempilha direita e esquerda, aplica um operador binário e empilha o resultado. |
+| `PRINT` | Desempilha um valor e o escreve no formato definido para seu tipo. |
+| `POP` | Descarta o valor no topo da pilha. |
+| `LABEL` | Marca um destino de desvio; não altera a pilha. |
+| `JUMP` | Continua no rótulo indicado; não altera a pilha. |
+| `JUMP_FALSE` | Desempilha uma condição e desvia quando ela é falsa. |
+| `CALL` | Desempilha os argumentos, cria um novo registro de ativação e inicia a função chamada. |
+| `RETURN` | Encerra o registro atual; se houver valor, desempilha-o e o empilha no chamador. |
+
+O programa próprio da equipe está em `exemplos/demonstracao-grupo.mpl`, com a
+saída esperada em `exemplos/demonstracao-grupo.saida`. Ele demonstra recursão
+no cálculo do máximo divisor comum e repetição com números reais numa simulação
+de juros compostos.
